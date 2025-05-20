@@ -122,6 +122,10 @@ type Tool = {
 ****************************************************/
 export type OpenAIStreamMessage =
   | ConversationItemCreatedEvent
+  | ConversationItemCreatee
+  | ResponseCreatee
+  | ResponseFunctionCallArgs
+  | ResponseDone
   | ErrorEvent
   | InputAudioBufferCommittedEvent
   | InputAudioBufferSpeechStartedEvent
@@ -144,6 +148,93 @@ type ConversationItemCreatedEvent = {
   event_id: string;
   previous_item_id: string;
   item: RealtimeItem;
+};
+
+type ConversationItemCreatee = {
+  type: "conversation.item.create";
+  event_id?: string;
+  previous_item_id?: string | null;
+  item: {
+    id?: string;
+    type: "message" | "function_call" | "function_call_output";
+    status?: "completed" | "in_progress" | "incomplete";
+    role: "user" | "assistant" | "system";
+    content: {
+      type: "input_text" | "input_audio" | "text" | "audio";
+      text?: string;
+      audio?: string;
+      transcript?: string;
+    }[];
+  };
+};
+
+type ResponseCreatee = {
+  type: "response.create";
+  event_id?: string;
+  response: {
+    modalities?: string[];
+    instructions?: string;
+    voice?: string;
+    output_audio_format?: string;
+    tools?: Tool[];
+    tool_choice?: string;
+    temperature?: number;
+    max_output_tokens?: number;
+  };
+};
+
+type ResponseFunctionCallArgs = {
+  type: "response.function_call_arguments.delta";
+  event_id: string;
+  response_id: string;
+  item_id: string;
+  output_index: number;
+  call_id: string;
+  delta: string;
+};
+
+type TokenDetails = {
+  text_tokens: number;
+  audio_tokens: number;
+};
+
+type CachedTokenDetails = TokenDetails & {
+  cached_tokens_details: {
+    text_tokens: number;
+    audio_tokens: number;
+  };
+};
+
+type UsageDetails = {
+  total_tokens: number;
+  input_tokens: number;
+  output_tokens: number;
+  input_token_details: CachedTokenDetails;
+  output_token_details: TokenDetails;
+};
+
+type FunctionCallOutput = {
+  object: "realtime.item";
+  id: string;
+  type: "function_call";
+  status: "completed";
+  name: string;
+  call_id: string;
+  arguments: string;
+};
+
+type ResponseDone = {
+  type: "response.done";
+  event_id: string;
+  response: {
+    object: "realtime.response";
+    id: string;
+    status: "completed";
+    status_details: null | string;
+    output: FunctionCallOutput[];
+    usage: UsageDetails;
+    metadata: null | any;
+  };
 };
 
 type ErrorEvent = {

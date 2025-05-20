@@ -86,7 +86,7 @@ export function setSessionParams() {
         output_audio_format: "g711_ulaw",
         modalities: ["text", "audio"],
         turn_detection: { type: "server_vad" }, // VAD (voice activity detection) enables input_audio_buffer.speech_started / .speech_stopped
-
+        tools: config.openai.tools,
         instructions: config.openai.instructions,
         temperature: config.openai.temperature,
         voice: config.openai.voice,
@@ -106,5 +106,40 @@ export function onMessage<T extends OpenAIStreamMessageTypes>(
   ws.on("message", (data) => {
     const msg = JSON.parse(data.toString()) as OpenAIStreamMessage;
     if (msg.type === type) callback(msg as OpenAIStreamMessage & { type: T });
+  });
+}
+// instead of the current implementation for passing params, we can use the https://platform.openai.com/docs/guides/realtime-conversations#detect-when-the-model-wants-to-call-a-function
+export function onFunctionCall(callback: (functionName: string, parameters: any, call_id: string) => void) {
+  // Track function call state
+  let currentCallId: string | null = null;
+  let currentFunction: string | null = null;
+  let currentParameters: string = '';
+
+  // Listen for function call arguments
+  onMessage("response.function_call_arguments.delta", (message) => {
+    console.log("function call arguments", message);
+    if (message.call_id) {
+      currentCallId = message.call_id;
+    }
+  });
+
+  // When function call is complete, execute callback
+  onMessage("response.done", (message) => {
+    console.log("function call done", message);
+    if (message.response.output[0].type === "function_call" && currentCallId) {
+      currentFunction = message.response.output[0].name;
+      currentParameters = message.response.output[0].arguments;
+      try {
+        const parsedParams = JSON.parse(currentParameters);
+        callback(currentFunction, parsedParams, currentCallId);
+      } catch (e) {
+        console.error('Error parsing function parameters:', e);
+        callback(currentFunction, {}, currentCallId);
+      }
+      // Reset state
+      currentCallId = null;
+      currentFunction = null;
+      currentParameters = '';
+    }
   });
 }
