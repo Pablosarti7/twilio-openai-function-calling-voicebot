@@ -33,7 +33,7 @@ The application needs to know the domain (`HOSTNAME`) it is deployed to in order
 Start ngrok by running this command.
 
 ```bash
-ngrok http 3000
+ngrok http 8080
 ```
 
 Then copy the domain
