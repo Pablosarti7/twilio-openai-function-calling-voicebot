@@ -7,6 +7,7 @@ This project is a clone of twilio's original https://github.com/pBread/twilio-op
 - The `/incoming-call` endpoint responds to Twilio's incoming call webhook with the TwiML noun [`<Stream/>`](https://www.twilio.com/docs/voice/twiml/stream)
 - A [Media Stream](https://www.twilio.com/docs/voice/media-streams) is established with the app's websocket endpoint.
 - Audio packets from the voice call are forwarded to [OpenAI's Realtime API](https://platform.openai.com/docs/guides/realtime/overview).
+- And using the [OpenAI's Realtime Conversations to achieve function calling](https://platform.openai.com/docs/guides/realtime-conversations#function-calling)
 - OpenAI responds with audio packets, which are forwarded to Twilio.
 
 ## Get Started
